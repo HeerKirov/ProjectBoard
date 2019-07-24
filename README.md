@@ -1,2 +1,3 @@
-# ProjectBoard
-Project, todo, note manager
+# Project Board
+Project, todo, thinking & note manager.
+> Coding ...
