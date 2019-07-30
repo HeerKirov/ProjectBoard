@@ -1,10 +1,9 @@
 import * as express from 'express'
 import {MaterialModel, ModuleModel, NoteModel, ProjectModel, TaskModel} from "../models/mongo"
-import {User, Project, Material, Module, Note, Task, TaskTodo, TaskThink, TaskNote} from "../models/model"
+import {Project, Material, Module, Note, Task, TaskTodo, TaskThink, TaskNote, User} from "../models/model"
 import {Selector} from "../common/selector"
 import {RestView, RestViewSet, Use} from "../common/view"
 import {authentication, permission} from "../services/user-service"
-import {Filter} from "../common/filter"
 import {Model, Document} from "mongoose"
 
 
@@ -42,7 +41,7 @@ export class ProjectView extends RestViewSet<Project> {
     }
 
     protected subModel(): { models: Model<Document>[]; lookup: string } {
-        return {models: [MaterialModel, ModuleModel], lookup: '_project'} //TODO 持续更新
+        return {models: [MaterialModel, ModuleModel, NoteModel, TaskModel], lookup: '_project'}
     }
 }
 
@@ -122,7 +121,7 @@ export class ModuleView extends RestViewSet<Module> {
     }
 
     protected subModel(): { models: Model<Document>[]; lookup: string } {
-        return {models: [], lookup: '_module'} //TODO 持续更新
+        return {models: [NoteModel, TaskModel], lookup: '_module'}
     }
 }
 
@@ -183,7 +182,7 @@ export class TaskView extends RestViewSet<Task> {
             {name: 'id', field: '_id', readonly: true},
             'title',
             'description',
-            {name: 'list', writeAs: TaskView.writeTaskList},
+            {name: 'list', writeAs: TaskView.writeTaskList, onlyOnDetail: true},
             {name: 'statistics', readonly: true},
             {name: 'deadline', default: null, nullable: true},
             {name: 'archived', default: false},
@@ -217,37 +216,17 @@ export class TaskView extends RestViewSet<Task> {
         await super.performUpdate(instance, setter, req);
     }
 
-    private static writeTaskList(list: any): (TaskTodo | TaskThink | TaskNote)[] | undefined {
+    private static writeTaskList(list: any): (TaskTodo | TaskThink | TaskNote | string)[] | undefined {
         if(typeof list !== 'object') return undefined
         let ret = []
         for(let item of list) {
-            if (typeof item !== 'object') return undefined
-            if (!(TaskView.taskListSelector[item['type']] !== undefined)) return undefined
-            let result = TaskView.taskListSelector[item['type']].writeFields(item)
-            if (result === undefined) return undefined
+            let result = TaskListView.writeTaskListItem(item)
+            if(result === undefined) return undefined
             ret.push(result)
         }
         return ret
     }
-    private static readonly taskListSelector = {
-        todo: new Selector([
-            {name: 'type'},
-            {name: 'content'},
-            {name: 'complete', default: false},
-            {name: 'remark', default: null, nullable: true},
-            {name: 'deadline', default: null, nullable: true}
-        ]),
-        think: new Selector([
-            {name: 'type'},
-            {name: 'content'},
-            {name: 'remark', default: null, nullable: true},
-            {name: 'deadline', default: null, nullable: true}
-        ]),
-        note: new Selector([
-            {name: 'type'},
-            {name: 'content'}
-        ])
-    }
+
     private static statistic(list: (TaskTodo | TaskThink | TaskNote)[]): any {
         let ret = {
             todoNum: 0, todoComplete: 0,
@@ -268,4 +247,109 @@ export class TaskView extends RestViewSet<Task> {
         return ret
     }
 }
-//TODO 修改selector和view的联动，使其能方便地区分list和detail等时的fields列表，以便区分两种不同需要下的fields。
+
+export class TaskListView extends RestView {
+    getURLPath(): string {
+        return '/projects/:project/modules/:module/tasks/:task/list'
+    }
+    getURLDetailSuffix(): string {
+        return ':index'
+    }
+
+    protected authentication(): Use {
+        return authentication.TOKEN
+    }
+    protected permission(): Use {
+        return permission.LOGIN
+    }
+
+    async list(req: express.Request, res: express.Response) {
+        let user: User = req['user']
+        let task = await TaskModel.findOne({_user: user._id, _project: req.params.project, _module: req.params.module, _id: req.params.task}).exec()
+        if(!task) {
+            res.sendStatus(404)
+            return
+        }
+        let list = task.list || []
+        res.send({count: list.length, statistics: task.statistics, result: list})
+    }
+    async retrieve(req: express.Request, res: express.Response) {
+        let user: User = req['user']
+        let task = await TaskModel.findOne({_user: user._id, _project: req.params.project, _module: req.params.module, _id: req.params.task}).exec()
+        if(!task) {
+            res.sendStatus(404)
+            return
+        }
+        let index = parseInt(req.params.index)
+        let list = task.list || []
+        if(isNaN(index) || index < 0 || index >= list.length) {
+            res.sendStatus(404)
+            return
+        }
+        res.contentType('application/json').send(JSON.stringify(list[index]))
+    }
+    async update(req: express.Request, res: express.Response, partial: boolean = false) {
+        let user: User = req['user']
+        let task = await TaskModel.findOne({_user: user._id, _project: req.params.project, _module: req.params.module, _id: req.params.task}).exec()
+        if(!task) {
+            res.sendStatus(404)
+            return
+        }
+        let index = parseInt(req.params.index)
+        let list = task.list || []
+        if(isNaN(index) || index < 0 || index >= list.length) {
+            res.sendStatus(404)
+            return
+        }
+        let setter = TaskListView.writeTaskListItem(req.body)
+        if(!setter) {
+            res.status(400).send('Wrong Field List')
+            return
+        }
+        if(!TaskListView.equalType(setter, list[index])) {
+            res.status(400).send('Type Changed')
+            return
+        }
+        list.splice(index, 1, setter)
+        await task.set({list}).save()
+        res.contentType('application/json').send(JSON.stringify(setter))
+    }
+
+    static writeTaskListItem(item: any): TaskTodo | TaskThink | TaskNote | string | undefined {
+        if(typeof item === 'string') {
+            return item
+        }else if(typeof item === 'object') {
+            if (!(TaskListView.taskListSelector[item['type']] !== undefined)) return undefined
+            let result = TaskListView.taskListSelector[item['type']].writeFields(item)
+            if (result === undefined) return undefined
+            return result
+        }else{
+            return undefined
+        }
+    }
+    static equalType(itemA: any, itemB: any): boolean {
+        if(itemA == null || itemB == null) return false
+        if(typeof itemA === 'string' && typeof itemB === 'string') return true
+        return itemA.type == itemB.type
+    }
+
+    private static readonly taskListSelector = {
+        todo: new Selector([
+            {name: 'type'},
+            {name: 'content'},
+            {name: 'complete', default: false},
+            {name: 'remark', default: null, nullable: true},
+            {name: 'deadline', default: null, nullable: true}
+        ]),
+        think: new Selector([
+            {name: 'type'},
+            {name: 'content'},
+            {name: 'remark', default: null, nullable: true},
+            {name: 'deadline', default: null, nullable: true}
+        ]),
+        note: new Selector([
+            {name: 'type'},
+            {name: 'content'}
+        ])
+    }
+}

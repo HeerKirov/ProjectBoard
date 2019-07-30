@@ -143,7 +143,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
     async list(req: express.Request, res: express.Response) {
         let user: User = req['user']
         let filter = this.filterComponent.filter({user: user._id, query: req.query, params: req.params})
-        let countPromise: Promise<number> = this.queryModelComponent.find(filter.find).count().exec()
+        let countPromise: Promise<number> = this.queryModelComponent.find(filter.find).countDocuments().exec()
         let list: T[] = await this.queryModelComponent
             .find(filter.find).sort(filter.sort)
             .limit(filter.limit).skip(filter.skip).exec()
@@ -174,7 +174,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
             res.sendStatus(404)
             return
         }
-        res.send(this.selectorComponent.readFields(object))
+        res.send(this.selectorComponent.readFields(object, true))
     }
     async update(req: express.Request, res: express.Response, partial: boolean = false) {
         let user: User = req['user']
@@ -189,7 +189,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
             return
         }
         await this.performUpdate(object, setter, req)
-        res.send(this.selectorComponent.readFields(object))
+        res.send(this.selectorComponent.readFields(object, true))
     }
     async partialUpdate(req: express.Request, res: express.Response) {
         await this.update(req, res, true)

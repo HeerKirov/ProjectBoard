@@ -65,7 +65,7 @@ export class UserView extends View {
 
     get(req: express.Request, res: express.Response) {
         let user: User = req['user']
-        res.send(this.selector.readFields(user))
+        res.send(this.selector.readFields(user, true))
     }
     async put(req: express.Request, res: express.Response, partial: boolean = false) {
         let user: User = req['user']
@@ -76,7 +76,7 @@ export class UserView extends View {
             return
         }
         await user.set(setter).save()
-        res.send(this.selector.readFields(user))
+        res.send(this.selector.readFields(user, true))
     }
     async patch(req: express.Request, res: express.Response) {
         await this.put(req, res, true)

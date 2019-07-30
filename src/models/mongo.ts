@@ -63,14 +63,14 @@ export const NoteModel = mongoose.model<Note>("Note", new mongoose.Schema({
     updateTime: {type: Types.Number, required: true},
     _user: {type: Types.ObjectId, required: true},
     _project: {type: Types.ObjectId, required: true},
-    _module: {type: Types.ObjectId, required: true}
+    _module: {type: Types.ObjectId, default: null}
 }))
 
 export const TaskModel = mongoose.model<Task>("Task", new mongoose.Schema({
     title: {type: Types.String, required: true},
     description: {type: Types.String, required: true},
     archived: {type: Types.Boolean, required: true, default: false},
-    list: {type: Types.Array, required: true, default: []},
+    list: {type: [], required: true, default: []},
     statistics: {
         todoNum: Types.Number, todoComplete: Types.Number,
         thinkNum: Types.Number, thinkComplete: Types.Number,

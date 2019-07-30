@@ -60,7 +60,7 @@ export interface Task extends Document {
     title: string
     description: string
     archived: boolean
-    list: (TaskTodo | TaskThink | TaskNote)[]
+    list: (TaskTodo | TaskThink | TaskNote | string)[]
     statistics: {
         todoNum: number, todoComplete: number,
         thinkNum: number, thinkComplete: number,

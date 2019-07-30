@@ -8,6 +8,7 @@ export interface Field {
     nullable?: boolean   //允许此字段的值为null。write配置选项之一。默认false。
     readAs?: (any) => any   //设定此字段，则会在read时对每一个选项实行转换。
     writeAs?: (any) => any  //设定此字段，则会在write时对每一个选项进行转换。
+    onlyOnDetail?: boolean  //仅在detail系操作中展示的字段。
 }
 
 function transferStandardField(f: string | Field): Field {
@@ -19,6 +20,7 @@ function transferStandardField(f: string | Field): Field {
         if(f.writeonly == undefined) f.writeonly = false
         if(f.required == undefined) f.required = true
         if(f.nullable == undefined) f.nullable = false
+        if(f.onlyOnDetail == undefined) f.onlyOnDetail = false
         return f
     }
 }
@@ -45,11 +47,12 @@ export class Selector {
     /**
      * 从obj里过滤出selector显式记录的fields。
      * @param obj
+     * @param detail
      */
-    readFields(obj: any): any {
+    readFields(obj: any, detail: boolean = false): any {
         let ret = {}
         for(let field of this.rFields) {
-            if(field.field in obj) {
+            if(field.field in obj && (detail || !field.onlyOnDetail)) {
                 if(field.readAs) ret[field.name] = field.readAs(obj[field.field])
                 else ret[field.name] = obj[field.field]
             }
