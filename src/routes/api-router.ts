@@ -7,7 +7,7 @@ let expressRouter = express.Router()
 
 let router = new Router(expressRouter)
 
-router.routeAsView(new TokenView())
+router.routeAsRestView(new TokenView())
 router.routeAsView(new UserView())
 router.routeAsRestView(new ProjectView())
 router.routeAsRestView(new MaterialView())

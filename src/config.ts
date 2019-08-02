@@ -3,7 +3,7 @@ let config = {
     PREFIX: '/project-api',
     TOKEN: {
         SECRET: 'FGREG^%$T$RW@#ET$Q##RQW1',
-        MAX_DURATION: 1000 * 60 * 60 * 24,
+        MAX_DURATION: 1000 * 60 * 60 * 24 * 7,
         DURATION: 1000 * 60 * 60
     },
     MONGO: {

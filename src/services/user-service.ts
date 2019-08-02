@@ -1,8 +1,8 @@
 import * as express from "express"
 import {encode, decode} from "base64-url"
 import {createHmac} from "crypto"
-import {User} from "../models/model"
-import {UserModel} from "../models/mongo"
+import {Token, User} from "../models/model"
+import {TokenModel, UserModel} from "../models/mongo"
 import config from "../config"
 
 const TOKEN_PREFIX = 'Bearer'
@@ -18,48 +18,61 @@ class PasswordUtil {
 }
 
 export class TokenService {
-    /**
-     * 给出username和签发时长，签发一个token。
-     * @param username
-     * @param duration
-     */
-    static issueToken(username: string, duration: number = 1000 * 60 * 60): string {
-        let timestamp = new Date().getTime()
-        let header = encode(JSON.stringify({alg: 'HS256', 'typ': 'jwt'}))
-        let payload = encode(JSON.stringify({aud: username, iat: timestamp, exp: timestamp + duration}))
+    static readonly VERIFY_TOKEN_EXCEPTION = {
+        NO_SUCH_TOKEN: 'No Such Token',
+        EXPIRED: 'Expired'
+    }
+    private static generateTokenString(username: string, now: number, ip: string): string {
         let hmac = createHmac('sha256', config.TOKEN.SECRET)
-        let signature = hmac.update(header).update('.').update(payload).digest('hex').toString()
-        return `${header}.${payload}.${signature}`
+        return hmac.update(`${username}.${now}.${ip}`).digest('hex').toString()
+    }
+    static issueToken(user: User, effective: number | null, platform: string, ip: string): Promise<Token> {
+        let now = new Date().getTime()
+        return TokenModel.create({
+            token: TokenService.generateTokenString(user.username, now, ip),
+            _user: user._id,
+            username: user.username,
+            platform,
+            ip,
+            createTime: now,
+            updateTime: now,
+            effectiveDuration: effective,
+            expireTime: effective ? effective + now : null
+        })
     }
 
-    /**
-     * 给出一个token，验证此token是否仍有效，如果有效返回内包含的payload部分。
-     * @param token
-     */
-    static verifyToken(token: string): {aud: string, iat: number, exp: number} | null {
-        let t = token.split('.')
-        if(t.length < 3) return null
-        let hmac = createHmac('sha256', config.TOKEN.SECRET)
-        let signature = hmac.update(t[0]).update('.').update(t[1]).digest('hex').toString()
-        if(signature === t[2]) {
-            let payload: {aud: string, iat: number, exp: number} = JSON.parse(decode(t[1]))
-            if(payload.exp >= new Date().getTime()) {
-                return payload
+    static async verifyToken(tokenString: string): Promise<Token | string> {
+        let token = await TokenModel.findOne({token: tokenString}).exec()
+        if(token == null) return TokenService.VERIFY_TOKEN_EXCEPTION.NO_SUCH_TOKEN
+        if(token.expireTime) {
+            let now = new Date().getTime()
+            if(token.expireTime < now) {
+                token.remove().finally()
+                return TokenService.VERIFY_TOKEN_EXCEPTION.EXPIRED
             }else{
-                return null
+                return token
             }
         }else{
-            return null
+            return token
         }
+    }
+
+    static updateToken(token: Token, effectiveDuration: number): Promise<Token> {
+        let now = new Date().getTime()
+        return token.set({updateTime: now, effectiveDuration, expireTime: effectiveDuration ? effectiveDuration + now : null}).save()
+    }
+
+    static async cleanToken(all: boolean = false): Promise<void> {
+        await TokenModel.deleteMany({}).where('expireTime').lt(new Date().getTime()).exec()
     }
 }
 
 export class AuthService {
-    static async findUserByUsername(username: string): Promise<User | null> {
-        return await UserModel.findOne({username}).exec()
+    static findUserByUsername(username: string): Promise<User | null> {
+        return UserModel.findOne({username}).exec()
     }
-    static async createUser(params: {username: string, name: string, password: string, isStaff?: boolean}): Promise<User> {
-        return await UserModel.create({
+    static createUser(params: {username: string, name: string, password: string, isStaff?: boolean}): Promise<User> {
+        return UserModel.create({
             username: params.username,
             name: params.name,
             password:PasswordUtil.encrypt(params.password),
@@ -81,28 +94,27 @@ export class AuthService {
 export const authentication = {
     async TOKEN(req: express.Request, res: express.Response, next) {
         let token = req.headers.authorization
-        if(token != null) {
-            if(token.startsWith(TOKEN_PREFIX)) {
-                let payload: {aud:string} | null = TokenService.verifyToken(token.substring(TOKEN_START_INDEX))
-                if(payload != null) {
-                    let user = await AuthService.findUserByUsername(payload.aud)
-                    if(user.isActive) {
-                        req['authentication'] = true
-                        req['username'] = payload.aud
-                        req['user'] = user
-                        next()
-                    }else{
-                        res.status(401).send('Invalid token')
-                    }
-                }else{
-                    res.status(401).send('Invalid token')
-                }
-            }else{
-                res.status(401).send('Invalid token type')
-            }
-        }else{
+        if(token == null) {
             req['authentication'] = false
+            next();return
+        }
+        if(!token.startsWith(TOKEN_PREFIX)) {
+            res.status(401).send('Invalid Token Type')
+            return
+        }
+        let result = await TokenService.verifyToken(token.substring(TOKEN_START_INDEX))
+        if(typeof result === 'string') {
+            res.status(401).send(result)
+            return
+        }
+        let user = await UserModel.findById((result as Token)._user).exec()
+        if(user.isActive) {
+            req['authentication'] = true
+            req['username'] = user.username
+            req['user'] = user
             next()
+        }else{
+            res.status(401).send('No Such User')
         }
     }
 }

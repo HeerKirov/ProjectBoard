@@ -14,6 +14,18 @@ export interface User extends Document {
     isActive: boolean
 }
 
+export interface Token extends Document {
+    token: string
+    _user: Types.ObjectId
+    username: string
+    platform: string        //标注这个token的使用平台
+    ip: string              //标注这个token的使用者的ip
+    createTime: number      //创建时间
+    updateTime: number      //上次更新这个token的时间
+    effectiveDuration: number   //有效时长
+    expireTime: number      //token到期的时间
+}
+
 export interface Project extends Document {
     name: string
     description: string

@@ -1,5 +1,5 @@
 import * as mongoose from 'mongoose'
-import {Module, Material, Project, User, Note, Task} from "./model"
+import {Module, Material, Project, User, Note, Task, Token} from "./model"
 import config from '../config'
 
 const dbConf = config.MONGO
@@ -26,6 +26,18 @@ export const UserModel = mongoose.model<User>('User', new mongoose.Schema({
     lastLoginIp: Types.String,
     isStaff: {type: Types.Boolean, required: true, default: false},
     isActive: {type: Types.Boolean, required: true, default: true}
+}))
+
+export const TokenModel = mongoose.model<Token>('Token', new mongoose.Schema({
+    token: {type: Types.String, required: true, index: true},
+    _user: {type: Types.ObjectId, required: true},
+    username: {type: Types.String, required: true},
+    platform: {type: Types.String, default: null},
+    ip: {type: Types.String, default: null},
+    createTime: {type: Types.Number, required: true},
+    updateTime: {type: Types.Number, required: true},
+    effectiveDuration: {type: Types.Number},
+    expireTime: {type: Types.Number}
 }))
 
 export const ProjectModel = mongoose.model<Project>("Project", new mongoose.Schema({

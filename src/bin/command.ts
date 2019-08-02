@@ -1,6 +1,6 @@
 import config from '../config'
 import * as mongoose from 'mongoose'
-import {AuthService} from "../services/user-service";
+import {AuthService, TokenService} from "../services/user-service";
 
 async function test() {
 
@@ -23,6 +23,12 @@ async function init() {
     await mongoose.disconnect()
 }
 
+async function cleanToken() {
+    console.log('clean expired token ...')
+    await TokenService.cleanToken()
+    console.log('clean completed.')
+}
+
 (async function(argv: string[]) {
     if(argv.length <= 2) {
         console.warn('Please choose one command.')
@@ -32,6 +38,7 @@ async function init() {
     switch (argv[2].toLowerCase()) {
         case 'init': await init(); break
         case 'test': await test(); break
+        case 'clean-token': await cleanToken(); break
         default:
             console.log(`Unknown command '${argv[2]}'.`)
             await mongoose.disconnect()
