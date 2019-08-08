@@ -7,6 +7,12 @@ import config from './config'
 
 let app = express();
 
+app.all('*', (req, res, next) => {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "*");
+    res.header("Access-Control-Allow-Methods","PUT,PATCH,POST,GET,DELETE,OPTIONS");
+    next();
+});
 app.use(logger('dev'));
 app.use(express.json({strict: false}));
 app.use(express.urlencoded({ extended: false }));

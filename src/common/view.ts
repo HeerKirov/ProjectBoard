@@ -49,7 +49,7 @@ abstract class View extends AbstractView {
         View.methodNotAllowed(req, res)
     }
     options(req: express.Request, res: express.Response) {
-        View.methodNotAllowed(req, res)
+        res.sendStatus(200)
     }
 
     static methodNotAllowed(req: express.Request, res: express.Response) {
@@ -80,7 +80,7 @@ abstract class RestView extends AbstractView {
         RestView.methodNotAllowed(req, res)
     }
     options(req: express.Request, res: express.Response) {
-        RestView.methodNotAllowed(req, res)
+        res.sendStatus(200)
     }
 
     private static methodNotAllowed(req: express.Request, res: express.Response) {

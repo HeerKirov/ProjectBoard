@@ -3,6 +3,15 @@ import {View, RestView, Use} from './view'
 
 const emptyUse: Use = (req, res, next) => next()
 
+const optionsUse: Use = (req, res, next) => {
+    if(req.method.toUpperCase() === 'OPTIONS') {
+        res.header('Access-Control-Max-Age', "600")
+        res.sendStatus(200)
+        return
+    }
+    next()
+}
+
 class Router {
     private router: express.Router = express.Router()
     private routeList: string[] = []
@@ -14,7 +23,7 @@ class Router {
 
     routeAsView(view: View): Router {
         let path = view.getURLPath()
-        this.router.all(path, view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
+        this.router.all(path, optionsUse, view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
             switch (req.method) {
                 case 'GET': view.get(req, res); break
                 case 'POST': view.post(req, res); break
@@ -30,7 +39,7 @@ class Router {
     }
     routeAsRestView(view: RestView): Router {
         let listPath = view.getURLPath(), detailSuffix = view.getURLDetailSuffix()
-        this.router.all(listPath, view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
+        this.router.all(listPath, optionsUse, view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
             switch (req.method) {
                 case 'GET': view.list(req, res); break
                 case 'POST': view.create(req, res); break
@@ -38,7 +47,7 @@ class Router {
                 default: View.methodNotAllowed(req, res)
             }
         })
-        this.router.all(listPath + '/' + detailSuffix,view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
+        this.router.all(listPath + '/' + detailSuffix, optionsUse,view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
             switch (req.method) {
                 case 'GET': view.retrieve(req, res); break
                 case 'PUT': view.update(req, res); break

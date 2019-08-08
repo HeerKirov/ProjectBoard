@@ -94,7 +94,7 @@ export class AuthService {
 export const authentication = {
     async TOKEN(req: express.Request, res: express.Response, next) {
         let token = req.headers.authorization
-        if(token == null) {
+        if(!token) {
             req['authentication'] = false
             next();return
         }
@@ -128,6 +128,10 @@ export const permission = {
         }
     },
     STAFF(req: express.Request, res: express.Response, next) {
+        if(req.method.toUpperCase() === 'OPTIONS') {
+            next()
+            return
+        }
         if(req['authentication'] && req['user'].isStaff) {
             next()
         }else{
