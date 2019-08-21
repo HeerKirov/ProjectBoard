@@ -42,7 +42,7 @@ export const TokenModel = mongoose.model<Token>('Token', new mongoose.Schema({
 
 export const ProjectModel = mongoose.model<Project>("Project", new mongoose.Schema({
     name: {type: Types.String, required: true, index: true},
-    description: {type: Types.String, required: true},
+    description: {type: Types.String},
     archived: {type: Types.Boolean, required: true, default: false},
     createTime: {type: Types.Number, required: true},
     updateTime: {type: Types.Number, required: true},
@@ -52,7 +52,7 @@ export const ProjectModel = mongoose.model<Project>("Project", new mongoose.Sche
 
 export const MaterialModel = mongoose.model<Material>("Material", new mongoose.Schema({
     title: {type: Types.String, required: true},
-    content: {type: Types.String, required: true},
+    content: {type: Types.String},
     createTime: {type: Types.Number, required: true},
     updateTime: {type: Types.Number, required: true},
     _user: {type: Types.ObjectId, required: true},
@@ -61,7 +61,7 @@ export const MaterialModel = mongoose.model<Material>("Material", new mongoose.S
 
 export const ModuleModel = mongoose.model<Module>("Module", new mongoose.Schema({
     name: {type: Types.String, required: true},
-    description: {type: Types.String, required: true},
+    description: {type: Types.String},
     createTime: {type: Types.Number, required: true},
     updateTime: {type: Types.Number, required: true},
     _user: {type: Types.ObjectId, required: true},
@@ -70,7 +70,7 @@ export const ModuleModel = mongoose.model<Module>("Module", new mongoose.Schema(
 
 export const NoteModel = mongoose.model<Note>("Note", new mongoose.Schema({
     title: {type: Types.String, required: true},
-    content: {type: Types.String, required: true},
+    content: {type: Types.String},
     createTime: {type: Types.Number, required: true},
     updateTime: {type: Types.Number, required: true},
     _user: {type: Types.ObjectId, required: true},
@@ -80,7 +80,7 @@ export const NoteModel = mongoose.model<Note>("Note", new mongoose.Schema({
 
 export const TaskModel = mongoose.model<Task>("Task", new mongoose.Schema({
     title: {type: Types.String, required: true},
-    description: {type: Types.String, required: true},
+    description: {type: Types.String},
     archived: {type: Types.Boolean, required: true, default: false},
     list: {type: [], required: true, default: []},
     statistics: {

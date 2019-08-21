@@ -33,22 +33,22 @@ abstract class AbstractView {
 }
 
 abstract class View extends AbstractView {
-    get(req: express.Request, res: express.Response) {
+    async get(req: express.Request, res: express.Response): Promise<void> {
         View.methodNotAllowed(req, res)
     }
-    post(req: express.Request, res: express.Response) {
+    async post(req: express.Request, res: express.Response): Promise<void> {
         View.methodNotAllowed(req, res)
     }
-    put(req: express.Request, res: express.Response) {
+    async put(req: express.Request, res: express.Response): Promise<void> {
         View.methodNotAllowed(req, res)
     }
-    patch(req: express.Request, res: express.Response) {
+    async patch(req: express.Request, res: express.Response): Promise<void> {
         View.methodNotAllowed(req, res)
     }
-    delete(req: express.Request, res: express.Response) {
+    async delete(req: express.Request, res: express.Response): Promise<void> {
         View.methodNotAllowed(req, res)
     }
-    options(req: express.Request, res: express.Response) {
+    async options(req: express.Request, res: express.Response): Promise<void> {
         res.sendStatus(200)
     }
 
@@ -61,25 +61,25 @@ abstract class RestView extends AbstractView {
     getURLDetailSuffix(): string {
         return ':id'
     }
-    list(req: express.Request, res: express.Response) {
+    async list(req: express.Request, res: express.Response): Promise<void> {
         RestView.methodNotAllowed(req, res)
     }
-    create(req: express.Request, res: express.Response) {
+    async create(req: express.Request, res: express.Response): Promise<void> {
         RestView.methodNotAllowed(req, res)
     }
-    retrieve(req: express.Request, res: express.Response) {
+    async retrieve(req: express.Request, res: express.Response): Promise<void> {
         RestView.methodNotAllowed(req, res)
     }
-    update(req: express.Request, res: express.Response) {
+    async update(req: express.Request, res: express.Response): Promise<void> {
         RestView.methodNotAllowed(req, res)
     }
-    partialUpdate(req: express.Request, res: express.Response) {
+    async partialUpdate(req: express.Request, res: express.Response) : Promise<void>{
         RestView.methodNotAllowed(req, res)
     }
-    delete(req: express.Request, res: express.Response) {
+    async delete(req: express.Request, res: express.Response): Promise<void> {
         RestView.methodNotAllowed(req, res)
     }
-    options(req: express.Request, res: express.Response) {
+    async options(req: express.Request, res: express.Response): Promise<void> {
         res.sendStatus(200)
     }
 
@@ -140,7 +140,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
         return ':' + this.lookupField()
     }
 
-    async list(req: express.Request, res: express.Response) {
+    async list(req: express.Request, res: express.Response): Promise<void> {
         let user: User = req['user']
         let filter = this.filterComponent.filter({user: user._id, query: req.query, params: req.params})
         let countPromise: Promise<number> = this.queryModelComponent.find(filter.find).countDocuments().exec()
@@ -150,7 +150,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
         let result = list.map(value => this.selectorComponent.readFields(value))
         res.send({count: await countPromise, result})
     }
-    async create(req: express.Request, res: express.Response) {
+    async create(req: express.Request, res: express.Response): Promise<void> {
         let user: User = req['user']
         if(this.queryNestedComponent) {
             let parent: Document = await this.queryNestedComponent.findOne(this.filterComponent.filterParent({user: user._id, query: req.query, params: req.params})).exec()
@@ -167,7 +167,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
         let model = await this.performCreate(setter, req)
         res.status(201).send(this.selectorComponent.readFields(model))
     }
-    async retrieve(req: express.Request, res: express.Response) {
+    async retrieve(req: express.Request, res: express.Response): Promise<void> {
         let user: User = req['user']
         let object: T = await this.queryModelComponent.findOne(this.filterComponent.filterOne({user: user._id, query: req.query, params: req.params})).exec()
         if(!object) {
@@ -176,7 +176,7 @@ abstract class RestViewSet<T extends Document> extends RestView {
         }
         res.send(this.selectorComponent.readFields(object, true))
     }
-    async update(req: express.Request, res: express.Response, partial: boolean = false) {
+    async update(req: express.Request, res: express.Response, partial: boolean = false): Promise<void> {
         let user: User = req['user']
         let object: T = await this.queryModelComponent.findOne(this.filterComponent.filterOne({user: user._id, query: req.query, params: req.params})).exec()
         if(!object) {
@@ -191,10 +191,10 @@ abstract class RestViewSet<T extends Document> extends RestView {
         await this.performUpdate(object, setter, req)
         res.send(this.selectorComponent.readFields(object, true))
     }
-    async partialUpdate(req: express.Request, res: express.Response) {
+    async partialUpdate(req: express.Request, res: express.Response): Promise<void> {
         await this.update(req, res, true)
     }
-    async delete(req: express.Request, res: express.Response) {
+    async delete(req: express.Request, res: express.Response): Promise<void> {
         let user: User = req['user']
         let object: T = await this.queryModelComponent.findOneAndDelete(this.filterComponent.filterOne({user: user._id, query: req.query, params: req.params})).exec()
         if(!object) {

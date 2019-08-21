@@ -24,13 +24,14 @@ class Router {
     routeAsView(view: View): Router {
         let path = view.getURLPath()
         this.router.all(path, optionsUse, view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
+            let throwException = Router.throwException(res)
             switch (req.method) {
-                case 'GET': view.get(req, res); break
-                case 'POST': view.post(req, res); break
-                case 'PUT': view.put(req, res); break
-                case 'PATCH': view.patch(req, res); break
-                case 'DELETE': view.delete(req, res); break
-                case 'OPTIONS': view.options(req, res); break
+                case 'GET': view.get(req, res).catch(throwException); break
+                case 'POST': view.post(req, res).catch(throwException); break
+                case 'PUT': view.put(req, res).catch(throwException); break
+                case 'PATCH': view.patch(req, res).catch(throwException); break
+                case 'DELETE': view.delete(req, res).catch(throwException); break
+                case 'OPTIONS': view.options(req, res).catch(throwException); break
                 default: View.methodNotAllowed(req, res)
             }
         })
@@ -40,25 +41,34 @@ class Router {
     routeAsRestView(view: RestView): Router {
         let listPath = view.getURLPath(), detailSuffix = view.getURLDetailSuffix()
         this.router.all(listPath, optionsUse, view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
+            let throwException = Router.throwException(res)
             switch (req.method) {
-                case 'GET': view.list(req, res); break
-                case 'POST': view.create(req, res); break
-                case 'OPTIONS': view.options(req, res); break
+                case 'GET': view.list(req, res).catch(throwException); break
+                case 'POST': view.create(req, res).catch(throwException); break
+                case 'OPTIONS': view.options(req, res).catch(throwException); break
                 default: View.methodNotAllowed(req, res)
             }
         })
         this.router.all(listPath + '/' + detailSuffix, optionsUse,view.getAuthentication() || emptyUse, view.getPermission() || emptyUse, (req, res) => {
+            let throwException = Router.throwException(res)
             switch (req.method) {
-                case 'GET': view.retrieve(req, res); break
-                case 'PUT': view.update(req, res); break
-                case 'PATCH': view.partialUpdate(req, res); break
-                case 'DELETE': view.delete(req, res); break
-                case 'OPTIONS': view.options(req, res); break
+                case 'GET': view.retrieve(req, res).catch(throwException); break
+                case 'PUT': view.update(req, res).catch(throwException); break
+                case 'PATCH': view.partialUpdate(req, res).catch(throwException); break
+                case 'DELETE': view.delete(req, res).catch(throwException); break
+                case 'OPTIONS': view.options(req, res).catch(throwException); break
                 default: View.methodNotAllowed(req, res)
             }
         })
         this.routeList.push(listPath, listPath + '/' + detailSuffix)
         return this
+    }
+
+    private static throwException(res: express.Response) {
+        return (e: Error) => {
+            res.sendStatus(500)
+            console.error(e)
+        }
     }
 
     private routeDefaultView() {

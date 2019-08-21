@@ -106,7 +106,7 @@ export class UserView extends View {
         {name: 'imageHash', readonly: true}
     ])
 
-    get(req: express.Request, res: express.Response) {
+    async get(req: express.Request, res: express.Response): Promise<void> {
         let user: User = req['user']
         res.send(this.selector.readFields(user, true))
     }

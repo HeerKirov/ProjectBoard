@@ -82,4 +82,8 @@ export class Selector {
         }
         return setter
     }
+
+    static notBlank(obj: any) : any {
+        return obj || undefined
+    }
 }

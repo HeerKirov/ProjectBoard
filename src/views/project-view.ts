@@ -18,7 +18,7 @@ export class ProjectView extends RestViewSet<Project> {
     protected selector(): Selector {
         return new Selector([
             {name: 'id', field: '_id', readonly: true},
-            'name',
+            {name: 'name', required: true, writeAs: Selector.notBlank},
             'description',
             {name: 'archived', default: false},
             {name: 'createTime', readonly: true},
@@ -62,7 +62,7 @@ export class MaterialView extends RestViewSet<Material> {
     protected selector(): Selector {
         return new Selector([
             {name: 'id', field: '_id', readonly: true},
-            'title',
+            {name: 'title', required: true, writeAs: Selector.notBlank},
             'content',
             {name: 'createTime', readonly: true},
             {name: 'updateTime', readonly: true}
@@ -100,7 +100,7 @@ export class ModuleView extends RestViewSet<Module> {
     protected selector(): Selector {
         return new Selector([
             {name: 'id', field: '_id', readonly: true},
-            'name',
+            {name: 'name', required: true, writeAs: Selector.notBlank},
             'description',
             {name: 'createTime', readonly: true},
             {name: 'updateTime', readonly: true}
@@ -142,7 +142,7 @@ export class NoteView extends RestViewSet<Note> {
     protected selector(): Selector {
         return new Selector([
             {name: 'id', field: '_id', readonly: true},
-            'title',
+            {name: 'name', required: true, writeAs: Selector.notBlank},
             'content',
             {name: 'createTime', readonly: true},
             {name: 'updateTime', readonly: true}
@@ -180,7 +180,7 @@ export class TaskView extends RestViewSet<Task> {
     protected selector(): Selector {
         return new Selector([
             {name: 'id', field: '_id', readonly: true},
-            'title',
+            {name: 'name', required: true, writeAs: Selector.notBlank},
             'description',
             {name: 'list', writeAs: TaskView.writeTaskList, onlyOnDetail: true},
             {name: 'statistics', readonly: true},
