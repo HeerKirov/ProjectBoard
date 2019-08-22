@@ -1,5 +1,5 @@
 import * as mongoose from 'mongoose'
-import {Module, Material, Project, User, Note, Task, Token} from "./model"
+import {Module, Project, User, Note, Task, Token} from "./model"
 import config from '../config'
 
 const dbConf = config.MONGO
@@ -48,15 +48,6 @@ export const ProjectModel = mongoose.model<Project>("Project", new mongoose.Sche
     updateTime: {type: Types.Number, required: true},
     imageHash: Types.String,
     _user: {type: Types.ObjectId, required: true}
-}))
-
-export const MaterialModel = mongoose.model<Material>("Material", new mongoose.Schema({
-    title: {type: Types.String, required: true},
-    content: {type: Types.String},
-    createTime: {type: Types.Number, required: true},
-    updateTime: {type: Types.Number, required: true},
-    _user: {type: Types.ObjectId, required: true},
-    _project: {type: Types.ObjectId, required: true}
 }))
 
 export const ModuleModel = mongoose.model<Module>("Module", new mongoose.Schema({

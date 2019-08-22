@@ -90,7 +90,7 @@ export class UserView extends View {
     }
 
     protected authentication(): Use {
-        return authentication.TOKEN
+        return authentication.ALL
     }
     protected permission(): Use {
         return permission.LOGIN

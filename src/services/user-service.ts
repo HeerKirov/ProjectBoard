@@ -5,10 +5,13 @@ import {Token, User} from "../models/model"
 import {TokenModel, UserModel} from "../models/mongo"
 import config from "../config"
 
-const TOKEN_PREFIX = 'Bearer'
-const TOKEN_START_INDEX = TOKEN_PREFIX.length + 1
+const AUTH_BEARER_PREFIX = 'Bearer'
+const AUTH_BEARER_START_INDEX = AUTH_BEARER_PREFIX.length + 1
+const AUTH_BASIC_PREFIX = 'Basic'
+const AUTH_BASIC_START_INDEX = AUTH_BASIC_PREFIX.length + 1
 
 class PasswordUtil {
+    //TODO 密码加密还没有做
     static encrypt(password: string): string {
         return password
     }
@@ -65,6 +68,23 @@ export class TokenService {
     static async cleanToken(all: boolean = false): Promise<void> {
         await TokenModel.deleteMany({}).where('expireTime').lt(new Date().getTime()).exec()
     }
+
+    static async expressTokenAuthenticate(token: string, req: express.Request, res: express.Response, next) {
+        let result = await TokenService.verifyToken(token)
+        if(typeof result === 'string') {
+            res.status(401).send(result)
+            return
+        }
+        let user = await UserModel.findById((result as Token)._user).exec()
+        if(user.isActive) {
+            req['authentication'] = true
+            req['username'] = user.username
+            req['user'] = user
+            next()
+        }else{
+            res.status(401).send('No Such User')
+        }
+    }
 }
 
 export class AuthService {
@@ -89,32 +109,61 @@ export class AuthService {
             return null
         }
     }
-}
 
-export const authentication = {
-    async TOKEN(req: express.Request, res: express.Response, next) {
-        let token = req.headers.authorization
-        if(!token) {
-            req['authentication'] = false
-            next();return
-        }
-        if(!token.startsWith(TOKEN_PREFIX)) {
-            res.status(401).send('Invalid Token Type')
-            return
-        }
-        let result = await TokenService.verifyToken(token.substring(TOKEN_START_INDEX))
-        if(typeof result === 'string') {
-            res.status(401).send(result)
-            return
-        }
-        let user = await UserModel.findById((result as Token)._user).exec()
-        if(user.isActive) {
+    static async expressBasicAuthenticate(token: string, req: express.Request, res: express.Response, next) {
+        let split = decode(token).split(":", 2)
+        let username = split[0]
+        let password = split[1]
+        let user = await AuthService.authenticate(username, password)
+        if(!user) {
+            res.status(401).send('Authenticate Failed')
+        }else if(user.isActive) {
             req['authentication'] = true
             req['username'] = user.username
             req['user'] = user
             next()
         }else{
             res.status(401).send('No Such User')
+        }
+    }
+}
+
+export const authentication = {
+    async BASIC_AUTH(req: express.Request, res: express.Response, next) {
+        let token = req.headers.authorization
+        if(!token) {
+            req['authentication'] = false
+            next();return
+        }
+        if(!token.startsWith(AUTH_BASIC_PREFIX)) {
+            res.status(401).send('Invalid Basic Auth Type')
+            return
+        }
+        AuthService.expressBasicAuthenticate(token.substring(AUTH_BASIC_START_INDEX), req, res, next).finally()
+    },
+    async TOKEN(req: express.Request, res: express.Response, next) {
+        let token = req.headers.authorization
+        if(!token) {
+            req['authentication'] = false
+            next();return
+        }
+        if(!token.startsWith(AUTH_BEARER_PREFIX)) {
+            res.status(401).send('Invalid Token Type')
+            return
+        }
+        TokenService.expressTokenAuthenticate(token.substring(AUTH_BEARER_START_INDEX), req, res, next).finally()
+    },
+    async ALL(req: express.Request, res: express.Response, next) {
+        let token = req.headers.authorization
+        if(!token) {
+            req['authentication'] = false
+            next()
+        }else if(token.startsWith(AUTH_BEARER_PREFIX)) {
+            TokenService.expressTokenAuthenticate(token.substring(AUTH_BEARER_START_INDEX), req, res, next).finally()
+        }else if(token.startsWith(AUTH_BASIC_PREFIX)) {
+            AuthService.expressBasicAuthenticate(token.substring(AUTH_BASIC_START_INDEX), req, res, next).finally()
+        }else{
+            res.status(401).send('Invalid Token Type')
         }
     }
 }

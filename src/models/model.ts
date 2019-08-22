@@ -37,16 +37,6 @@ export interface Project extends Document {
     _user: Types.ObjectId
 }
 
-export interface Material extends Document {
-    title: string
-    content: string
-    createTime: number
-    updateTime: number
-
-    _project: Types.ObjectId
-    _user: Types.ObjectId
-}
-
 export interface Module extends Document {
     name: string
     description: string
@@ -63,7 +53,7 @@ export interface Note extends Document {
     createTime: number
     updateTime: number
 
-    _module: Types.ObjectId
+    _module?: Types.ObjectId
     _project: Types.ObjectId
     _user: Types.ObjectId
 }

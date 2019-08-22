@@ -2,8 +2,7 @@ import * as express from 'express'
 import {Model, Document} from "mongoose"
 import {Selector} from "./selector"
 import {Filter} from "./filter"
-import {Material, Project, User} from "../models/model"
-import {MaterialModel, ProjectModel} from "../models/mongo"
+import {User} from "../models/model"
 
 export interface Use {(req: express.Request, res: express.Response, next?): void}
 
@@ -88,6 +87,9 @@ abstract class RestView extends AbstractView {
     }
 }
 
+type RestMethod = "LIST" | "CREATE" | "RETRIEVE" | "UPDATE" | "DELETE"
+const AllRestMethods = {LIST: true, CREATE: true, RETRIEVE: true, UPDATE: true, DELETE: true}
+
 abstract class RestViewSet<T extends Document> extends RestView {
     protected queryModelComponent: Model<T>
     protected selectorComponent: Selector
@@ -95,9 +97,16 @@ abstract class RestViewSet<T extends Document> extends RestView {
     private readonly nestedList: string[]
     private readonly queryNestedComponent: Model<Document>
     private readonly subModelComponent: {models: Model<Document>[], lookup: string}
+    private readonly restMethods: {[key: string]: boolean}
 
     constructor() {
         super()
+        this.restMethods = ((methods: RestMethod[]) => {
+            if(methods == null) return AllRestMethods
+            let ret = {}
+            for(let method of methods) ret[method] = true
+            return ret
+        })(this.methods())
         this.queryModelComponent = this.queryModel()
         this.selectorComponent = this.selector()
         this.nestedList = this.nested() || []
@@ -111,6 +120,9 @@ abstract class RestViewSet<T extends Document> extends RestView {
         this.subModelComponent = this.subModel()
     }
 
+    protected methods(): RestMethod[] {
+        return null
+    }
     protected abstract queryModel(): Model<T>
     protected abstract selector(): Selector
     protected sortFields(): string[] {
@@ -141,6 +153,10 @@ abstract class RestViewSet<T extends Document> extends RestView {
     }
 
     async list(req: express.Request, res: express.Response): Promise<void> {
+        if(!this.restMethods['LIST']) {
+            View.methodNotAllowed(req, res)
+            return
+        }
         let user: User = req['user']
         let filter = this.filterComponent.filter({user: user._id, query: req.query, params: req.params})
         let countPromise: Promise<number> = this.queryModelComponent.find(filter.find).countDocuments().exec()
@@ -151,6 +167,10 @@ abstract class RestViewSet<T extends Document> extends RestView {
         res.send({count: await countPromise, result})
     }
     async create(req: express.Request, res: express.Response): Promise<void> {
+        if(!this.restMethods['CREATE']) {
+            View.methodNotAllowed(req, res)
+            return
+        }
         let user: User = req['user']
         if(this.queryNestedComponent) {
             let parent: Document = await this.queryNestedComponent.findOne(this.filterComponent.filterParent({user: user._id, query: req.query, params: req.params})).exec()
@@ -165,9 +185,13 @@ abstract class RestViewSet<T extends Document> extends RestView {
             return
         }
         let model = await this.performCreate(setter, req)
-        res.status(201).send(this.selectorComponent.readFields(model))
+        res.status(201).send(this.selectorComponent.readFields(model, true))
     }
     async retrieve(req: express.Request, res: express.Response): Promise<void> {
+        if(!this.restMethods['RETRIEVE']) {
+            View.methodNotAllowed(req, res)
+            return
+        }
         let user: User = req['user']
         let object: T = await this.queryModelComponent.findOne(this.filterComponent.filterOne({user: user._id, query: req.query, params: req.params})).exec()
         if(!object) {
@@ -177,6 +201,10 @@ abstract class RestViewSet<T extends Document> extends RestView {
         res.send(this.selectorComponent.readFields(object, true))
     }
     async update(req: express.Request, res: express.Response, partial: boolean = false): Promise<void> {
+        if(!this.restMethods['UPDATE']) {
+            View.methodNotAllowed(req, res)
+            return
+        }
         let user: User = req['user']
         let object: T = await this.queryModelComponent.findOne(this.filterComponent.filterOne({user: user._id, query: req.query, params: req.params})).exec()
         if(!object) {
@@ -195,6 +223,10 @@ abstract class RestViewSet<T extends Document> extends RestView {
         await this.update(req, res, true)
     }
     async delete(req: express.Request, res: express.Response): Promise<void> {
+        if(!this.restMethods['DELETE']) {
+            View.methodNotAllowed(req, res)
+            return
+        }
         let user: User = req['user']
         let object: T = await this.queryModelComponent.findOneAndDelete(this.filterComponent.filterOne({user: user._id, query: req.query, params: req.params})).exec()
         if(!object) {
@@ -235,4 +267,4 @@ abstract class RestViewSet<T extends Document> extends RestView {
 }
 
 
-export {View, RestView, RestViewSet}
+export {View, RestView, RestViewSet, RestMethod}
