@@ -103,7 +103,7 @@ export class UserView extends View {
         {name: 'lastLoginIp', readonly: true},
         {name: 'lastLogin', readonly: true},
         {name: 'isStaff', readonly: true},
-        {name: 'imageHash', readonly: true}
+        {name: 'avatarId', readonly: true}
     ])
 
     async get(req: express.Request, res: express.Response): Promise<void> {

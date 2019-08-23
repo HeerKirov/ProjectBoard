@@ -4,7 +4,7 @@ export interface User extends Document {
     username: string
     name: string
     password: string
-    imageHash: string
+    avatarId: Types.ObjectId
 
     dateJoined: number
     lastLogin: number
@@ -32,7 +32,7 @@ export interface Project extends Document {
     archived: boolean
     createTime: number
     updateTime: number
-    imageHash: string
+    coverId: Types.ObjectId
 
     _user: Types.ObjectId
 }
@@ -99,4 +99,5 @@ export interface Img extends Document {
     type: "public" | "avatar" | "cover"
     uploadTime: number
     _user: Types.ObjectId
+    _project: Types.ObjectId
 }

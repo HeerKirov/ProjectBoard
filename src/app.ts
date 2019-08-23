@@ -17,7 +17,7 @@ app.use(logger('dev'))
 app.use(express.json({strict: false}))
 app.use(express.urlencoded({ extended: false }))
 app.use(cookieParser())
-app.use(`${config.PREFIX}/static`, express.static(path.join(__dirname, 'public')))
+app.use(`${config.PREFIX}/static`, express.static(path.join(__dirname, '../public')))
 
 app.use(`${config.PREFIX}/api/`, apiRouter)
 

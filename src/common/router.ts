@@ -3,7 +3,7 @@ import {View, RestView, Use} from './view'
 
 const emptyUse: Use = (req, res, next) => next()
 
-const optionsUse: Use = (req, res, next) => {
+export const optionsUse: Use = (req, res, next) => {
     if(req.method.toUpperCase() === 'OPTIONS') {
         res.header('Access-Control-Max-Age', "600")
         res.sendStatus(200)
@@ -13,8 +13,8 @@ const optionsUse: Use = (req, res, next) => {
 }
 
 class Router {
-    private router: express.Router = express.Router()
-    private routeList: string[] = []
+    private readonly router: express.Router = express.Router()
+    private readonly routeList: string[] = []
 
     constructor(router: express.Router) {
         this.router = router
@@ -61,6 +61,10 @@ class Router {
             }
         })
         this.routeList.push(listPath, listPath + '/' + detailSuffix)
+        return this
+    }
+    route(asView: (router: express.Router) => void): Router {
+        asView(this.router)
         return this
     }
 

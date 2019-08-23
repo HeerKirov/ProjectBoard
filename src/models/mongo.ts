@@ -20,7 +20,7 @@ export const UserModel = mongoose.model<User>('User', new mongoose.Schema({
     username: {type: Types.String, required: true, index: true, unique: true},
     name: {type: Types.String, required: true},
     password: {type: Types.String, required: true},
-    imageHash: Types.String,
+    avatarId: {type: Types.ObjectId, default: null},
     dateJoined: {type: Types.Number, required: true},
     lastLogin: Types.Number,
     lastLoginIp: Types.String,
@@ -46,7 +46,7 @@ export const ProjectModel = mongoose.model<Project>("Project", new mongoose.Sche
     archived: {type: Types.Boolean, required: true, default: false},
     createTime: {type: Types.Number, required: true},
     updateTime: {type: Types.Number, required: true},
-    imageHash: Types.String,
+    coverId: {type: Types.ObjectId, default: null},
     _user: {type: Types.ObjectId, required: true}
 }))
 
@@ -90,5 +90,6 @@ export const TaskModel = mongoose.model<Task>("Task", new mongoose.Schema({
 export const ImageModel = mongoose.model<Img>("Img", new mongoose.Schema({
     type: {type: Types.String, required: true},
     uploadTime: {type: Types.Number, required: true},
-    _user: {type: Types.ObjectId, required: true}
+    _user: {type: Types.ObjectId, required: true},
+    _project: {type: Types.ObjectId, default: null},
 }))

@@ -11,12 +11,9 @@ const AUTH_BASIC_PREFIX = 'Basic'
 const AUTH_BASIC_START_INDEX = AUTH_BASIC_PREFIX.length + 1
 
 class PasswordUtil {
-    //TODO 密码加密还没有做
-    static encrypt(password: string): string {
-        return password
-    }
-    static equal(password1: string, password2: string): boolean {
-        return password1 === password2
+    static encrypt(password: string, userKeyMessage: string): string {
+        let hmac = createHmac('sha256', config.TOKEN.SECRET)
+        return hmac.update(password).update(userKeyMessage).digest('hex').toString()
     }
 }
 
@@ -92,22 +89,26 @@ export class AuthService {
         return UserModel.findOne({username}).exec()
     }
     static createUser(params: {username: string, name: string, password: string, isStaff?: boolean}): Promise<User> {
+        let now = new Date().getTime()
         return UserModel.create({
             username: params.username,
             name: params.name,
-            password:PasswordUtil.encrypt(params.password),
-            dateJoined: new Date().getTime(),
+            password: PasswordUtil.encrypt(params.password, now.toString()),
+            dateJoined: now,
             isStaff: params.isStaff || false
         })
     }
 
     static async authenticate(username: string, password: string): Promise<User| null> {
         let user = await UserModel.findOne({username}).exec()
-        if(user && PasswordUtil.equal(user.password, password)) {
+        if(user && user.password === PasswordUtil.encrypt(password, user.dateJoined.toString())) {
             return user
         }else{
             return null
         }
+    }
+    static async setPassword(user: User, newPassword: string): Promise<void> {
+        await user.set({password: PasswordUtil.encrypt(newPassword, user.dateJoined.toString())}).save()
     }
 
     static async expressBasicAuthenticate(token: string, req: express.Request, res: express.Response, next) {

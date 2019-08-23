@@ -5,6 +5,7 @@ import {ProjectView} from "../views/project-view"
 import {ModuleView} from "../views/module-view"
 import {NoteView, ModuleNoteView, ProjectNoteView} from "../views/note-view"
 import {TaskListView, TaskView, ModuleTaskView, ProjectTaskView} from "../views/task-view"
+import {ImgView, ResourceImgView} from "../views/img-view"
 
 let expressRouter = express.Router()
 
@@ -21,6 +22,6 @@ router.routeAsRestView(new ModuleTaskView())
 router.routeAsRestView(new NoteView())
 router.routeAsRestView(new TaskView())
 router.routeAsRestView(new TaskListView())
-//TODO 图片系统还没有做
-//TODO 考虑做一个markdown图床服务
+router.routeAsRestView(new ImgView())
+router.route(ResourceImgView.asView)
 export default expressRouter

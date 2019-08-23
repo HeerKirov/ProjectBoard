@@ -2,7 +2,7 @@ let config = {
     PORT: 8003,
     PREFIX: '/project-api',
     TOKEN: {
-        SECRET: 'FGREG^%$T$RW@#ET$Q##RQW1',
+        SECRET: '',
         MAX_DURATION: 1000 * 60 * 60 * 24 * 7,
         DURATION: 1000 * 60 * 60
     },
@@ -28,12 +28,19 @@ let config = {
     },
     IMAGE: {
         TYPE: 'fs',     //'fs' or 'oss'
-        FILEPATH: 'images',
+        UPLOAD_PATH: 'uploads/',
+        FILEPATH: 'images/',
         OSS: {
-            REGION: '',
+            REGION: 'oss-cn-hangzhou',
             ACCESS_KEY_ID: '',
             ACCESS_KEY_SECRET: '',
-            BUCKET: ''
+            BUCKET: 'project-board',
+            SIGN_TIMEOUT: 60 * 60 * 24
+        },
+        CONVERT: {
+            AVATAR_SIZE: {width: 256, height: 256},
+            COVER_SIZE: {width: 384, height: 192},
+            PUBLIC_MAX_SIZE: {width: 1024, height: 1024}
         }
     }
 }

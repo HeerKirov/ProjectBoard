@@ -1,43 +1,44 @@
 import config from '../config'
-import {User} from "../models/model"
-import {Types} from "mongoose";
-import {ObjectID} from 'mongodb'
+import {Dict, MongoID} from "./utils"
 
-const EmptyObjectId: ObjectID = new ObjectID(String.fromCharCode(0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0))
-
-function oid(id: string): ObjectID {
-    if(ObjectID.isValid(id)) {
-        return ObjectID.createFromHexString(id)
-    }else{
-        return EmptyObjectId
-    }
-}
+const oid = MongoID.oid
 
 export class Filter {
-    private readonly sort: any = {}
+    private readonly sort: any
     private readonly sortDefault: string
     private readonly nest: string[] = null     //param.field : query.field
     private readonly lookup: string = 'id'
-    constructor(param: {sort?: string[], sortDefault?: string, nest?: string[], lookup?: string}) {
-        if(param.sort) {
-            for(let s of param.sort) {
-                this.sort[s] = null
+    private readonly filterDefault: Dict<any>
+    constructor(param: {
+        sort?: string[], sortDefault?: string,
+        filterDefault?: Dict<any>,
+        nest?: string[], lookup?: string
+    }) {
+        this.sort = (() => {
+            let ret = {}
+            if(param.sort) {
+                for(let s of param.sort) {
+                    ret[s] = null
+                }
             }
-        }
-
+            return ret
+        })()
         this.sortDefault = param.sortDefault || undefined
+        this.filterDefault = param.filterDefault || {}
         if(param.nest) this.nest = param.nest
         if(param.lookup) this.lookup = param.lookup
     }
 
-    filter(param: {user?: string | {userId: string, field: string}, query: any, params: any}): {find: any, sort: string, limit: number, skip: number} {
+    filter(param: {user?: string, query: any, params: any}): {find: any, sort: string, limit: number, skip: number} {
         let find = {}
-        if(typeof param.user === 'string') find['_user'] = param.user
-        else if(typeof param.user === 'object') find[param.user.field] = param.user.userId
+        if(param.user != undefined) find['_user'] = param.user
         if(this.nest) {
             for(let paramName of this.nest) {
                 find[`_${paramName}`] = oid(param.params[paramName])
             }
+        }
+        for(let field in this.filterDefault) {
+            find[field] = this.filterDefault[field]
         }
 
         let sort
@@ -60,17 +61,20 @@ export class Filter {
 
         return {find, sort, limit, skip}
     }
-    filterOne(param: {user?: string | {userId: string, field: string}, query: any, params: any}): any {
+    filterOne(param: {user?: string, query: any, params: any}): any {
         let find = {}
-        if(typeof param.user === 'string') find['_user'] = param.user
-        else if(typeof param.user === 'object') find[param.user.field] = param.user.userId
+        if(param.user != undefined) find['_user'] = param.user
         if(this.nest) {
             for(let paramName of this.nest) {
                 find[`_${paramName}`] = oid(param.params[paramName])
             }
         }
         find[`_${this.lookup}`] = oid(param.params[this.lookup])
+        for(let field in this.filterDefault) {
+            find[field] = this.filterDefault[field]
+        }
 
+        console.log(find)
         return find
     }
     filterParent(param: {user?: string| {userId: string, field: string}, query: any, params: any}): any {

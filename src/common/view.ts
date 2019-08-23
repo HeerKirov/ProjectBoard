@@ -3,6 +3,7 @@ import {Model, Document} from "mongoose"
 import {Selector} from "./selector"
 import {Filter} from "./filter"
 import {User} from "../models/model"
+import {Dict} from "./utils";
 
 export interface Use {(req: express.Request, res: express.Response, next?): void}
 
@@ -114,7 +115,8 @@ abstract class RestViewSet<T extends Document> extends RestView {
             sortDefault: this.sortDefaultField(),
             sort: this.sortFields(),
             nest: this.nestedList,
-            lookup: this.lookupField()
+            lookup: this.lookupField(),
+            filterDefault: this.filterDefaultField()
         })
         this.queryNestedComponent = this.nestedModel()
         this.subModelComponent = this.subModel()
@@ -130,6 +132,9 @@ abstract class RestViewSet<T extends Document> extends RestView {
     }
     protected sortDefaultField(): string {
         return undefined
+    }
+    protected filterDefaultField(): Dict<any> {
+        return null
     }
     protected lookupField(): string {
         return 'id'
