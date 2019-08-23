@@ -1,5 +1,5 @@
 import * as mongoose from 'mongoose'
-import {Module, Project, User, Note, Task, Token} from "./model"
+import {Module, Project, User, Note, Task, Token, Img} from "./model"
 import config from '../config'
 
 const dbConf = config.MONGO
@@ -85,4 +85,10 @@ export const TaskModel = mongoose.model<Task>("Task", new mongoose.Schema({
     _user: {type: Types.ObjectId, required: true},
     _project: {type: Types.ObjectId, required: true},
     _module: {type: Types.ObjectId, required: true}
+}))
+
+export const ImageModel = mongoose.model<Img>("Img", new mongoose.Schema({
+    type: {type: Types.String, required: true},
+    uploadTime: {type: Types.Number, required: true},
+    _user: {type: Types.ObjectId, required: true}
 }))

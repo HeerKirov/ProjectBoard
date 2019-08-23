@@ -94,3 +94,9 @@ export interface TaskNote {
     type: "note"
     content: string
 }
+
+export interface Img extends Document {
+    type: "public" | "avatar" | "cover"
+    uploadTime: number
+    _user: Types.ObjectId
+}

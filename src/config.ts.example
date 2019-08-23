@@ -25,6 +25,16 @@ let config = {
     },
     SORT: {
         FIELD: 'sort'
+    },
+    IMAGE: {
+        TYPE: 'fs',     //'fs' or 'oss'
+        FILEPATH: 'images',
+        OSS: {
+            REGION: '',
+            ACCESS_KEY_ID: '',
+            ACCESS_KEY_SECRET: '',
+            BUCKET: ''
+        }
     }
 }
 
