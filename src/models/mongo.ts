@@ -43,6 +43,7 @@ export const TokenModel = mongoose.model<Token>('Token', new mongoose.Schema({
 export const ProjectModel = mongoose.model<Project>("Project", new mongoose.Schema({
     name: {type: Types.String, required: true, index: true},
     description: {type: Types.String},
+    content: {type: Types.String},
     archived: {type: Types.Boolean, required: true, default: false},
     createTime: {type: Types.Number, required: true},
     updateTime: {type: Types.Number, required: true},

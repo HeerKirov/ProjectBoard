@@ -29,6 +29,7 @@ export interface Token extends Document {
 export interface Project extends Document {
     name: string
     description: string
+    content: string
     archived: boolean
     createTime: number
     updateTime: number

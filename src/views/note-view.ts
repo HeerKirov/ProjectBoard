@@ -35,7 +35,7 @@ export class ProjectNoteView extends RestViewSet<Note> {
     }
 
     protected sortFields(): string[] {
-        return ['updateTime', 'createTime']
+        return ['updateTime', 'createTime', 'title']
     }
     protected sortDefaultField(): string {
         return '-updateTime'
@@ -70,7 +70,7 @@ export class ModuleNoteView extends RestViewSet<Note> {
     }
 
     protected sortFields(): string[] {
-        return ['updateTime', 'createTime']
+        return ['updateTime', 'createTime', 'title']
     }
     protected sortDefaultField(): string {
         return '-updateTime'

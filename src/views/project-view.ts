@@ -19,6 +19,7 @@ export class ProjectView extends RestViewSet<Project> {
             {name: 'id', field: '_id', readonly: true},
             {name: 'name', required: true, writeAs: Selector.notBlank},
             'description',
+            'content',
             {name: 'archived', default: false},
             {name: 'createTime', readonly: true},
             {name: 'updateTime', readonly: true},

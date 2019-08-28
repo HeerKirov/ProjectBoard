@@ -74,7 +74,6 @@ export class Filter {
             find[field] = this.filterDefault[field]
         }
 
-        console.log(find)
         return find
     }
     filterParent(param: {user?: string| {userId: string, field: string}, query: any, params: any}): any {
